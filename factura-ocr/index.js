@@ -13,6 +13,33 @@ const app = express();
 app.use(cors());
 const upload = multer({ dest: 'uploads/' });
 
+// Función para preprocesar imagen (grayscale + normalize)
+async function preprocessImage(inputPath, outputPath) {
+  await sharp(inputPath)
+    .grayscale()
+    .normalize()
+    .toFile(outputPath);
+}
+
+// Función para parsear texto OCR y extraer datos simples (ejemplo)
+function parseText(text) {
+  const lines = text.split('\n');
+  const data = [];
+
+  lines.forEach(line => {
+    const match = line.match(/(\d+)\s+(\w+)\s+(\d+(\.\d+)?)/);
+    if (match) {
+      data.push({
+        cantidad: parseInt(match[1]),
+        producto: match[2],
+        precio: parseFloat(match[3])
+      });
+    }
+  });
+
+  return data;
+}
+
 // Ruta para subir imagen y obtener texto con Google Vision
 app.post('/upload', upload.single('image'), async (req, res) => {
   if (!req.file) return res.status(400).send('No file uploaded.');
